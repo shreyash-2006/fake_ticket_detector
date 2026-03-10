@@ -1,1 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fake ticket detector</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700;900&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<div class="wrapper">
 
+  <!-- HEADER -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12zM6 10h2v2H6zm0 4h8v2H6zm10 0h2v2h-2zm-6-4h8v2h-8z"/></svg>
+      </div>
+      <h1>Fake Ticket <span>Detector</span></h1>
+    </div>
+    <div class="status-badge">
+      <div class="dot"></div>
+      TERMINAL ONLINE
+    </div>
+  </header>
+
+  <!-- MODE SELECTOR -->
+  <div class="selector" id="selector">
+    <div class="tab active" data-mode="ticket" onclick="setMode('ticket')">
+      <div class="tab-icon">
+        <svg viewBox="0 0 24 24"><path d="M22 10V6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v4c1.1 0 2 .9 2 2s-.9 2-2 2v4c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-4c-1.1 0-2-.9-2-2s.9-2 2-2zm-2-1.46c-1.19.69-2 1.99-2 3.46s.81 2.77 2 3.46V18H4v-2.54c1.19-.69 2-1.99 2-3.46 0-1.48-.8-2.77-2-3.46V6h16v2.54z"/></svg>
+      </div>
+      <div class="tab-label">
+        <strong>Ticket</strong>
+        <span>VERIFY SINGLE-USE TICKET</span>
+      </div>
+    </div>
+    <div class="tab" data-mode="pass" onclick="setMode('pass')">
+      <div class="tab-icon">
+        <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
+      </div>
+      <div class="tab-label">
+        <strong>Pass</strong>
+        <span>VERIFY TRAVEL PASS / CARD</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN PANEL -->
+  <div class="panel">
+    <div class="section-label">SCAN &amp; VERIFY</div>
+
+    <!-- Upload Form -->
+    <div id="formArea">
+
+      <!-- Input Source Toggle -->
+      <div class="input-source-toggle" id="inputSourceToggle">
+        <button class="source-btn active" id="srcUploadBtn" onclick="switchSource('upload')">
+          <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
+          Upload File
+        </button>
+        <button class="source-btn" id="srcCameraBtn" onclick="switchSource('camera')">
+          <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+          Use Camera
+        </button>
+      </div>
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)"/>
+        <div class="drop-icon">
+          <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
+        </div>
+        <div class="drop-text">
+          <strong>Upload Ticket Image</strong>
+          <span>DRAG &amp; DROP OR CLICK TO BROWSE — PNG, JPG, WEBP</span>
+        </div>
+      </div>
+
+      <div class="preview-wrap" id="previewWrap">
+        <img id="previewImg" src="" alt="Ticket Preview"/>
+        <div class="preview-filename" id="previewFilename"></div>
+        <button class="preview-remove" onclick="removeFile()">✕ REMOVE</button>
+      </div>
+
+      <button class="scan-btn" id="scanBtn" onclick="runScan()">
+        <span>⬡ Initiate Scan</span>
+      </button>
+    </div>
+
+    <!-- Scanning overlay -->
+    <div class="scanning-overlay" id="scanningOverlay">
+      <div class="scanner-frame">
+        <div class="scan-line"></div>
+      </div>
+      <div class="scan-status-text" id="scanStatusText">INITIALIZING OCR ENGINE...</div>
+    </div>
+
+    <!-- Result Card -->
+    <div class="result-card" id="resultCard">
+      <div class="result-glow"></div>
+      <div class="result-header">
+        <div class="result-icon" id="resultIcon"></div>
+        <div class="result-verdict" id="resultVerdict"></div>
+      </div>
+      <div class="result-message" id="resultMessage"></div>
+      <div class="result-data" id="resultData"></div>
+      <button class="reset-btn" onclick="resetForm()">↩ SCAN ANOTHER</button>
+    </div>
+  </div>
+
+  <!-- LOG STRIP -->
+  <div class="log-strip">
+    <div class="log-header">// VERIFICATION LOG</div>
+    <div class="log-entries" id="logEntries">
+      <div class="log-entry log-inf">
+        <span class="ts" id="initTs"></span>
+        <span class="msg">Terminal initialised. Awaiting scan input.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CAMERA MODAL -->
+  <div class="camera-modal" id="cameraModal">
+    <div class="camera-modal-header">
+      <div class="camera-modal-title">Live Camera Feed</div>
+      <button class="camera-close-btn" onclick="closeCamera()">✕ CLOSE</button>
+    </div>
+
+    <div class="camera-viewport" id="cameraViewport">
+      <video id="cameraVideo" autoplay playsinline muted></video>
+      <canvas id="cameraCanvas" style="display:none;"></canvas>
+      <div class="viewfinder">
+        <div class="vf-corner tl"></div>
+        <div class="vf-corner tr"></div>
+        <div class="vf-corner bl"></div>
+        <div class="vf-corner br"></div>
+        <div class="camera-scan-line" id="camScanLine"></div>
+      </div>
+      <div class="frozen-badge" id="frozenBadge">◼ FRAME CAPTURED</div>
+      <div class="camera-error-msg" id="cameraErrorMsg"></div>
+    </div>
+
+    <div class="camera-controls">
+      <button class="cam-btn" id="captureBtn" onclick="captureFrame()">
+        <span>⬤ Capture Frame</span>
+      </button>
+      <button class="cam-btn secondary" id="retakeBtn" onclick="retakePhoto()">
+        <span>↺ Retake</span>
+      </button>
+      <button class="cam-btn secondary" id="useCaptureBtn" style="display:none;" onclick="useCapture()">
+        <span>✓ Use This</span>
+      </button>
+    </div>
+    <div class="camera-hint">Position the ticket flat and fully within the frame. Ensure good lighting for best OCR results.</div>
+  </div>
+
+</div>
+<script src="script.js"></script>
+</body>
+</html>
