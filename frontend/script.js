@@ -401,3 +401,4 @@ function closeCamera() {
 
     addLog('Camera closed.', 'inf');
 }
+
